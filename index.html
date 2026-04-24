@@ -751,7 +751,7 @@ setInterval(() => {
     if (spaceHeld && game.running) shoot();
 }, 100);
 
-// 事件监听
+// 事件监听 - 键盘
 document.addEventListener('keydown', (e) => {
     keys[e.key] = true;
     if (e.key === ' ') {
@@ -764,6 +764,82 @@ document.addEventListener('keyup', (e) => {
     keys[e.key] = false;
     if (e.key === ' ') spaceHeld = false;
 });
+
+// 触摸拖动控制
+let isTouching = false;
+let touchOffsetX = 0;
+let touchOffsetY = 0;
+
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    let touch = e.touches[0];
+    let rect = canvas.getBoundingClientRect();
+    let scaleX = canvas.width / rect.width;
+    let scaleY = canvas.height / rect.height;
+    let tx = (touch.clientX - rect.left) * scaleX;
+    let ty = (touch.clientY - rect.top) * scaleY;
+    
+    // 检查是否触摸到飞船附近
+    let dist = Math.sqrt((tx - player.x) ** 2 + (ty - player.y) ** 2);
+    if (dist < 80) {
+        isTouching = true;
+        touchOffsetX = player.x - tx;
+        touchOffsetY = player.y - ty;
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (!isTouching || !game.running) return;
+    
+    let touch = e.touches[0];
+    let rect = canvas.getBoundingClientRect();
+    let scaleX = canvas.width / rect.width;
+    let scaleY = canvas.height / rect.height;
+    let tx = (touch.clientX - rect.left) * scaleX;
+    let ty = (touch.clientY - rect.top) * scaleY;
+    
+    player.x = Math.max(25, Math.min(canvas.width - 25, tx + touchOffsetX));
+    player.y = Math.max(25, Math.min(canvas.height - 25, ty + touchOffsetY));
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    isTouching = false;
+}, { passive: false });
+
+// 鼠标拖动（电脑上也可以用）
+let isMouseDown = false;
+
+canvas.addEventListener('mousedown', (e) => {
+    let rect = canvas.getBoundingClientRect();
+    let scaleX = canvas.width / rect.width;
+    let scaleY = canvas.height / rect.height;
+    let mx = (e.clientX - rect.left) * scaleX;
+    let my = (e.clientY - rect.top) * scaleY;
+    
+    let dist = Math.sqrt((mx - player.x) ** 2 + (my - player.y) ** 2);
+    if (dist < 80) {
+        isMouseDown = true;
+        touchOffsetX = player.x - mx;
+        touchOffsetY = player.y - my;
+    }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    if (!isMouseDown || !game.running) return;
+    let rect = canvas.getBoundingClientRect();
+    let scaleX = canvas.width / rect.width;
+    let scaleY = canvas.height / rect.height;
+    let mx = (e.clientX - rect.left) * scaleX;
+    let my = (e.clientY - rect.top) * scaleY;
+    
+    player.x = Math.max(25, Math.min(canvas.width - 25, mx + touchOffsetX));
+    player.y = Math.max(25, Math.min(canvas.height - 25, my + touchOffsetY));
+});
+
+canvas.addEventListener('mouseup', () => { isMouseDown = false; });
+canvas.addEventListener('mouseleave', () => { isMouseDown = false; });
 
 // 开始按钮
 startBtn.addEventListener('click', () => {
